@@ -32,8 +32,10 @@ be easily adapted to other fields by adding LaTeX style files for relevant
 journals. Please let me know if you want to work on implementing Kindlize
 for fields outside of Astrophysics.
 
+_UPDATE_
 
-
+jb55 made a hack to make this work with CS papers on arxiv. This fork converts
+papers to one-column more aggressively.
 
 Screenshots
 -----------
@@ -73,11 +75,11 @@ Installation
 If you have [mercurial](http://mercurial.selenic.com) installed, clone
 the source
 
-    $ hg clone ssh://hg@bitbucket.org/nye17/kindlize 
+    $ hg clone ssh://hg@bitbucket.org/nye17/kindlize
 
 otherwise you can download tarball from
 [here](https://bitbucket.org/nye17/kindlize/downloads), then
-    
+
     $ tar zxvf kindlize-0.1.0.tar.gz
 
 to de-compress under your current directory.
@@ -100,7 +102,7 @@ major goals I want to achieve for a hassle-free reading experience:
 
 * Converting the source tarball downloaded from arXiv server into Kindle-friendly pdf for any arXiv-id.
 * Maintaining a local directory of "kindlized" pdfs among multiple computers (using Dropbox).
-* Synchronizing your Kindle arXiv content to the local directory on your computer. 
+* Synchronizing your Kindle arXiv content to the local directory on your computer.
 
 Kindlize is designed to take care of all three goals, with some help from
 Dropbox (simply by storing your local copy of kindlized pdfs inside your
@@ -156,7 +158,7 @@ writable by your user account.
 ### incomingDir=/media/Kindle/documents/Incoming/
 
 Tells Kindlize where your Kindle content will show up in your file system
-(i.e., the `/media/Kindle` part, which should be the same as `mountDir`) 
+(i.e., the `/media/Kindle` part, which should be the same as `mountDir`)
 and which subdirectory you want to store the
 arXiv files (i.e., the `documents/Incoming` part). Note that `incomingDir`
 will always be synced to `dropDir`. You also need to create `incomingDir`
@@ -184,7 +186,7 @@ Determines the baseline of your fonts.
 
 Determines which pdf viewer to preview the generated pdfs on your computer. `mupdf` is
 strongly recommended.
- 
+
 
 Usage
 -----

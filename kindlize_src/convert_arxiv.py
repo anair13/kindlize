@@ -94,6 +94,7 @@ def examine_texenv(desdir):
     clsfiles = []
     bstfiles = []
     bblfiles = []
+    styfiles = []
     for file in os.listdir(desdir) :
         if file.endswith(".tex") :
             print("found tex file in the tar bundle %s" % file)
@@ -107,7 +108,10 @@ def examine_texenv(desdir):
         elif file.endswith(".bbl") :
             print("found bbl file in the tar bundle %s" % file)
             bblfiles.append(file)
-    return(texfiles, clsfiles, bstfiles, bblfiles)
+        elif file.endswith(".sty") :
+            print("found sty file in the tar bundle %s" % file)
+            styfiles.append(file)
+    return(texfiles, clsfiles, bstfiles, bblfiles, styfiles)
 
 def getMaster(texfiles, desdir):
     """ copy master tex file to main.tex and determine whether latex2e or latex2.09 is needed.
@@ -139,7 +143,9 @@ def getBiblio(bblfiles, desdir):
         bblfile_old = os.path.join(desdir, bblfiles[0])
         bblfile_new = os.path.join(desdir, "main.bbl")
         print("copying main bbl file  from %s"% bblfiles[0])
-        shutil.copy(bblfile_old, bblfile_new)
+        if bblfile_old != bblfile_new:
+            print "copying", bblfile_old, bblfile_new
+            shutil.copy(bblfile_old, bblfile_new)
 
 def checkMaster(masterfile, texversion) :
     """ find document class and first author name
@@ -475,7 +481,10 @@ def convert(filename, year, saveDir, clibDir, dropDir, font, fontheight, fontwid
         use_pdflatex = False
     # extract content
     t.extractall(desdir)
-    texfiles, clsfiles, bstfiles, bblfiles = examine_texenv(desdir)
+    texfiles, clsfiles, bstfiles, bblfiles, styfiles = examine_texenv(desdir)
+    for s in styfiles:
+        styfile = os.path.join(desdir, s)
+        substituteAll(styfile, "twocolumn", "onecolumn")
     # go through all files
     masterfile, texversion = getMaster(texfiles, desdir)
     # deal with old latex2.09 files
@@ -485,6 +494,7 @@ def convert(filename, year, saveDir, clibDir, dropDir, font, fontheight, fontwid
     # examine documentclass and find author
     classoption, classname, author = checkMaster(masterfile, texversion)
     # copy style files
+    print "CLASS", classname
     getClass(classname, clibDir, clsfiles, bstfiles, desdir)
     # find options of documentclass
     hasoptbracket, classopts = getOpt(classoption)
@@ -495,7 +505,8 @@ def convert(filename, year, saveDir, clibDir, dropDir, font, fontheight, fontwid
     # recompile
     pdfout = do_latex(clibDir, desdir, masterfile, use_pdflatex=use_pdflatex)
     # rename
-    newpdfname = author + year + ".pdf"
+    pdfname = raw_input("PDF name? ")
+    newpdfname = pdfname + ".pdf"
     newpdf = os.path.join(desdir, newpdfname)
     shutil.move(pdfout, newpdf)
     print("generated pdf file: %s " % newpdf)
@@ -525,6 +536,10 @@ def kindlizeit(masterfile, hasoptbracket, classname, col_set, onecol_arg, twocol
     # need to remove any predefined geometry setttings.
     p = re.compile(r"^\\usepackage.*{geometry}")
     substituteAll(masterfile, p, "")
+
+    # ASHVIN ADDITIONS
+    substituteAll(masterfile, "twocolumn", "onecolumn")
+
     # add geostr - to fit in the screen size of kindle DX
     p = re.compile(r"^\\begin{document}")
     if classname == "emulateapj" :
