@@ -21,6 +21,8 @@ geostr_apj = "\usepackage[paperwidth=13.8cm, paperheight=22.0cm, top=2.3cm, left
 geostr_mn  = "\usepackage[paperwidth=13.8cm, paperheight=22.0cm, top=2.5cm, left=0.5cm, right=0.5cm, bottom= 0.5cm]{geometry}\n"
 geostr_els = "\usepackage[paperwidth=15.8cm, paperheight=22.0cm, top=0.5cm, left=0.5cm, right=0.5cm, bottom= 0.3cm]{geometry}\n"
 
+geom_match_regex = r"\\usepackage(.|\n|\r)*?{geometry}"
+geom_matcher = re.compile(geom_match_regex)
 
 # latex cls library
 jname = { "elsart_mm" : "Elsevier Science",
@@ -364,7 +366,25 @@ def parse_documentclass(classname, classopts, desdir):
         print("the existing file uses default column settting")
     return(col_set, onecol_arg, twocol_arg)
 
+def fullreplaceAll(file, pattern, subst):
+    """Substitute regex pattern in file"""
+    #Create temp file
+    fh, abs_path = mkstemp()
+    new_file = open(abs_path,'w')
+    old_file = open(file)
+    lines = old_file.read()
+    #close temp file
+    new_file.write(re.sub(pattern, subst, lines))
+    new_file.close()
+    os.close(fh)
+    old_file.close()
+    #Remove original file
+    os.remove(file)
+    #Move new file
+    shutil.move(abs_path, file)
+
 def substituteAll(file, pattern, subst):
+    """Substitute regex pattern in file per line"""
     #Create temp file
     fh, abs_path = mkstemp()
     new_file = open(abs_path,'w')
@@ -391,6 +411,7 @@ def findstr(file, str) :
     return(answer)
 
 def replaceAll(file, pattern, subst):
+    """Substitute string pattern in file"""
     #Create temp file
     fh, abs_path = mkstemp()
     new_file = open(abs_path,'w')
@@ -484,7 +505,7 @@ def convert(filename, year, saveDir, clibDir, dropDir, font, fontheight, fontwid
     texfiles, clsfiles, bstfiles, bblfiles, styfiles = examine_texenv(desdir)
     for s in styfiles:
         styfile = os.path.join(desdir, s)
-        substituteAll(styfile, "twocolumn", "onecolumn")
+        kindlize_style_file(styfile)
     # go through all files
     masterfile, texversion = getMaster(texfiles, desdir)
     # deal with old latex2.09 files
@@ -534,8 +555,7 @@ def kindlizeit(masterfile, hasoptbracket, classname, col_set, onecol_arg, twocol
         else :
             print("Nothing I can do about, stay with default, maybe you are lucky")
     # need to remove any predefined geometry setttings.
-    p = re.compile(r"^\\usepackage.*{geometry}")
-    substituteAll(masterfile, p, "")
+    substituteAll(masterfile, geom_matcher, "")
 
     # ASHVIN ADDITIONS
     substituteAll(masterfile, "twocolumn", "onecolumn")
@@ -578,6 +598,16 @@ def kindlizeit(masterfile, hasoptbracket, classname, col_set, onecol_arg, twocol
     for pack in banned_packages :
         p = re.compile("[^\%]usepackage(.*)\{" + pack +"\}")
         commentALL(masterfile, p)
+
+def kindlize_style_file(styfile):
+    print "cleaning", styfile
+    substituteAll(styfile, "twocolumn", "onecolumn")
+    fullreplaceAll(styfile, geom_matcher, "")
+
+    # comment out banned package
+    for pack in banned_packages :
+        p = re.compile("[^\%]usepackage(.*)\{" + pack +"\}")
+        commentALL(styfile, p)
 
 def correct_unknown_author(pdffile) :
     """ ask input from commandline the true author name if the code cannot figure out.
